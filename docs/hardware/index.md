@@ -19,3 +19,8 @@ Hemos identificado los siguientes componentes:
 |Disco duro|WD5000AAKX SATA, 500 gb|No presenta ninguna anomalía.|
 |Lector de discos|DH-16AES PLDS|Inactivo pero no presenta ningún defecto.|
 |Tarjeta gráfica|Intel Core i5-4590|Integrada en la CPU.|
+
+## Estado inicial
+
+El ordenador ha emitido el mesaje 1 3 2 de pitidos indicando que las tarjetas RAM estaban mal posicionadas,
+hemos colocado de forma correcta las tarjetas y el ordenador ha funcionado.
