@@ -48,14 +48,30 @@ plt.figure(4)
 plt.imshow(ndvi_d, cmap="RdYlGn" , vmin= -1, vmax= 1)
 plt.colorbar()
 
-vegetacion_a = ndvi_a > 0.4
+vegetacion_a = (ndvi_a > 0.4).astype(int)
+vegetacion_d = (ndvi_d > 0.4).astype(int)
 
 plt.figure(5)
 plt.imshow(vegetacion_a, cmap="gray")
 
-vegetacion_d = ndvi_d > 0.4
-
 plt.figure(6)
 plt.imshow(vegetacion_d, cmap="gray")
+
+ndvi_dif = ndvi_a - ndvi_d
+
+plt.figure(7)
+plt.imshow(ndvi_dif, cmap ="Reds" , vmin= 0 , vmax= 1)
+
+quemado = vegetacion_a - vegetacion_d
+
+plt.figure(8)
+plt.imshow(quemado > 0)
+
+nbr = (ir_a - swir_a) / (ir_d + swir_d)
+
+plt.figure(9)
+plt.imshow(nbr, cmap="RdYlGn", vmin=-1, vmax=1)
+plt.colorbar(label="NBR")
+plt.show()
 
 plt.show()
