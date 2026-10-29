@@ -67,11 +67,18 @@ quemado = vegetacion_a - vegetacion_d
 plt.figure(8)
 plt.imshow(quemado > 0)
 
-nbr = (ir_a - swir_a) / (ir_d + swir_d)
-
+nbr_a = (ir_a - swir_a) / (ir_a + swir_a)
+nbr_d = (ir_d - swir_d) / (ir_d + swir_d)
+nbr_dif = nbr_a - nbr_d
+quem_nbr = (nbr_dif >0.2) & (ndvi_a > 0.4)
 plt.figure(9)
-plt.imshow(nbr, cmap="RdYlGn", vmin=-1, vmax=1)
+plt.imshow(quem_nbr, cmap="RdYlGn", vmin=-1, vmax=1)
 plt.colorbar(label="NBR")
-plt.show()
+
+#Cálculo de áreas
+area_ndvi = np.count_nonzero(quemado) * 20 * 20 /10000
+area_nbr = np.count_nonzero(quem_nbr) * 20 * 20 / 10000
+print(f"El área quemada calculada con NDVI es {area_ndvi}ha")
+print(f"El área quemada calculada con  el NBR es {area_nbr} ha")
 
 plt.show()
