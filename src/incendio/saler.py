@@ -71,6 +71,23 @@ nbr_a = (ir_a - swir_a) / (ir_a + swir_a)
 nbr_d = (ir_d - swir_d) / (ir_d + swir_d)
 nbr_dif = nbr_a - nbr_d
 quem_nbr = (nbr_dif >0.2) & (ndvi_a > 0.4)
+
+severidad = np.zeros(nbr_dif.shape, dtype=int)
+vegetacion = ndvi_a > 0.4
+
+severidad[(nbr_dif >= 0.1) & (nbr_dif < 0.27) & vegetacion] = 1
+severidad[(nbr_dif >= 0.27) & (nbr_dif < 0.66) & vegetacion] = 2
+severidad[(nbr_dif >= 0.66) & vegetacion] = 3
+afectado = severidad > 0
+p = np.pad(afectado.astype(int), 1)
+
+plt.figure(10)
+plt.imshow(rgb_a)
+plt.imshow(np.where(severidad == 0, np.nan, severidad), cmap="autumn_r", vmin=1, vmax=3, alpha=0.85)
+plt.colorbar(ticks=[1,2,3]).set_ticklabels(["Baja", "Media", "Alta"])
+plt.title("Severidad estimada del incendio")
+
+
 plt.figure(9)
 plt.imshow(quem_nbr, cmap="RdYlGn", vmin=-1, vmax=1)
 plt.colorbar(label="NBR")
