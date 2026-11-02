@@ -27,9 +27,8 @@ Por último para sacar la imagen de la diferencia de la vegetación creo la vari
 
 ![Imagen del nbr del Saler](diferencia_nbr.png)
 
-O al menos eso creía porque faltaba hacer más cosas como primero arreglar mi nbr y crear otras imágenes, como la severidad, una representación del área afectada. Entonces creo otras imágenes que definen el área de quemado y otra de diferencia de vegetación en grises y una imágen que define la diferencia de nbr y ndvi en rojo.
+O al menos eso creía porque faltaba hacer más cosas como primero arreglar mi nbr y crear otras imágenes, como la severidad, una representación del área afectada. Entonces creo otras imágenes  de diferencia de vegetación en grises y otra imágen que define la diferencia de nbr y ndvi en rojo.
 
-![Imagen del nbr del Saler corrección](diferencia_nbr.png)
 ![Imagen del Saler correción en grises](dif_grises.png)
 ![Imagen de dif entre nbr y ndvi en rojo](nbr_y_ndvi_en_rojo.png)
 
