@@ -7,6 +7,15 @@ st.set_page_config(
     page_title="Sistema de Reservas - Robótica", page_icon="🤖", layout="wide"
 )
 
+if "usuario_autenticado" not in st.session_state:
+    st.session_state.usuario_autenticado = None
+
+if "ciclo_seleccionado" not in st.session_state:
+    st.session_state.ciclo_seleccionado = None
+
+if "reservas" not in st.session_state:
+    st.session_state.reservas = []
+
 
 def obtener_imagen_base64(ruta_imagen):
     if os.path.exists(ruta_imagen):
@@ -16,7 +25,20 @@ def obtener_imagen_base64(ruta_imagen):
 
 
 directorio_actual = os.path.dirname(os.path.abspath(__file__))
-ruta_fondo = os.path.join(directorio_actual, "fondo.png")
+
+if (
+    st.session_state.usuario_autenticado is None
+    or st.session_state.ciclo_seleccionado is None
+):
+    archivo_fondo = "fondo1.png"
+elif st.session_state.ciclo_seleccionado == "Infantil":
+    archivo_fondo = "fondoinfantil1.png"
+elif st.session_state.ciclo_seleccionado == "Primaria":
+    archivo_fondo = "fondoprimaria1.png"
+else:
+    archivo_fondo = "fondo_secundaria1.png"
+
+ruta_fondo = os.path.join(directorio_actual, archivo_fondo)
 imagen_base64 = obtener_imagen_base64(ruta_fondo)
 
 if imagen_base64:
@@ -131,25 +153,15 @@ def cargar_inventario():
 
 INVENTARIO = cargar_inventario()
 
-if "usuario_autenticado" not in st.session_state:
-    st.session_state.usuario_autenticado = None
-
-if "ciclo_seleccionado" not in st.session_state:
-    st.session_state.ciclo_seleccionado = None
-
-if "reservas" not in st.session_state:
-    st.session_state.reservas = []
-
 
 def eliminar_reserva(indice):
     st.session_state.reservas.pop(indice)
-
-
+# --- FIN DE LA PARTE 1 (Pega la Parte 2 justo debajo de esta línea) ---
 if st.session_state.usuario_autenticado is None:
     st.title("🔑 Registro de Acceso - Sistema de Reservas")
-    st.write("Por favor, introduce tus datos para acceder al inventario de robótica:")
+    st.write("Por favor, introduzca sus datos para registrar la reserva:")
 
-    nombre_profesor = st.text_input("Nombre de la persona / profesor que reserva *")
+    nombre_profesor = st.text_input("Nombre y apellidos del profesor/a *")
 
     if st.button("Ingresar al Sistema"):
         if not nombre_profesor.strip():

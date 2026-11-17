@@ -3,9 +3,6 @@ import os
 import pandas as pd
 import streamlit as st
 
-# ---------------------------------------------------------
-# CONFIGURACIÓN E INYECCIÓN DE ESTILO Y FONDO
-# ---------------------------------------------------------
 st.set_page_config(
     page_title="Sistema de Reservas - Robótica", page_icon="🤖", layout="wide"
 )
@@ -32,8 +29,16 @@ else:
 st.markdown(
     f"""
     <style>
-    html, body, [data-testid="stAppViewContainer"], .stApp, p, div, label, button, span {{
+    html, body, [data-testid="stAppViewContainer"], .stApp, p, label, button {{
         font-family: 'Inter', sans-serif !important;
+    }}
+    [data-testid="stExpander"] summary {{
+        background-color: rgba(255, 255, 255, 0.85) !important;
+        border-radius: 8px !important;
+        padding: 0.5rem 1rem !important;
+    }}
+    [data-testid="stExpander"] summary span[data-testid="stIconMaterial"] {{
+        font-family: 'Material Symbols Rounded' !important;
     }}
     [data-testid="stAppViewContainer"], [data-testid="stHeader"], .stMain {{
         background-color: transparent !important;
@@ -58,8 +63,35 @@ st.markdown(
         color: #0F172A !important;
         font-weight: 700 !important;
     }}
-    button[data-testid="stMarkdownContainer"] p {{
-        font-weight: 600 !important;
+
+    /* ---------------------------------------------------------
+       TARJETAS AZULES GRANDES PARA LOS BOTONES PRINCIPALES
+       --------------------------------------------------------- */
+    div[data-testid="stButton"] button[kind="primary"] {{
+        background: linear-gradient(135deg, #0284c7 0%, #38bdf8 100%) !important;
+        color: #ffffff !important;
+        min-height: 170px !important;
+        padding: 1.5rem 1rem !important;
+        border-radius: 20px !important;
+        border: 2px solid rgba(255, 255, 255, 0.7) !important;
+        box-shadow: 0 10px 25px -5px rgba(2, 132, 199, 0.35), 0 8px 10px -6px rgba(2, 132, 199, 0.2) !important;
+        transition: all 0.25s ease !important;
+        white-space: pre-line !important;
+    }}
+
+    div[data-testid="stButton"] button[kind="primary"] p {{
+        font-size: 1.65rem !important;
+        font-weight: 800 !important;
+        line-height: 1.4 !important;
+        color: #ffffff !important;
+        text-shadow: 0 1px 2px rgba(15, 23, 42, 0.2) !important;
+    }}
+
+    div[data-testid="stButton"] button[kind="primary"]:hover {{
+        background: linear-gradient(135deg, #0369a1 0%, #0ea5e9 100%) !important;
+        transform: translateY(-6px) scale(1.02) !important;
+        box-shadow: 0 20px 30px -10px rgba(2, 132, 199, 0.5) !important;
+        border-color: #ffffff !important;
     }}
     </style>
     """,
@@ -67,13 +99,11 @@ st.markdown(
 )
 
 
-# ---------------------------------------------------------
-# CARGA DE INVENTARIO DESDE CSV (O RESPALDO)
-# ---------------------------------------------------------
 @st.cache_data
 def cargar_inventario():
     try:
-        df = pd.read_csv("inventario_robotica.csv")
+        ruta_csv = os.path.join(directorio_actual, "inventario_robotica.csv")
+        df = pd.read_csv(ruta_csv)
         return dict(zip(df["nombre"], df["cantidad"]))
     except Exception:
         return {
@@ -101,9 +131,9 @@ def cargar_inventario():
 
 INVENTARIO = cargar_inventario()
 
-# ---------------------------------------------------------
-# ESTADOS DE SESIÓN (NAVEGACIÓN Y RESERVAS)
-# ---------------------------------------------------------
+if "usuario_autenticado" not in st.session_state:
+    st.session_state.usuario_autenticado = None
+
 if "ciclo_seleccionado" not in st.session_state:
     st.session_state.ciclo_seleccionado = None
 
@@ -115,49 +145,69 @@ def eliminar_reserva(indice):
     st.session_state.reservas.pop(indice)
 
 
-# ---------------------------------------------------------
-# PANTALLA PRINCIPAL: SELECCIÓN DE CICLO
-# ---------------------------------------------------------
-if st.session_state.ciclo_seleccionado is None:
+if st.session_state.usuario_autenticado is None:
+    st.title("🔑 Registro de Acceso - Sistema de Reservas")
+    st.write("Por favor, introduzca sus datos para registrar la reserva:")
+
+    nombre_profesor = st.text_input("Nombre y apellidos del profesor/a *")
+
+    if st.button("Ingresar al Sistema"):
+        if not nombre_profesor.strip():
+            st.error("⚠️ Debes introducir un nombre válido para continuar.")
+        else:
+            st.session_state.usuario_autenticado = nombre_profesor.strip()
+            st.rerun()
+
+elif st.session_state.ciclo_seleccionado is None:
+    col_logout, _ = st.columns(2)
+    with col_logout:
+        if st.button("❌ Cambiar de Profesor / Salir"):
+            st.session_state.usuario_autenticado = None
+            st.rerun()
+
     st.title("🤖 Reserva de Material de Informática y Robótica")
+    st.subheader(f"Bienvenido/a, **{st.session_state.usuario_autenticado}**")
     st.write(
-        "Por favor, selecciona el ciclo educativo en el que deseas consultar o"
-        " reservar el material:"
+        "Selecciona el ciclo educativo en el que deseas consultar o reservar el material:"
     )
 
-    col1, col2, col3 = st.columns(3)
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    col1, col2, col3 = st.columns(3, gap="large")
 
     with col1:
-        if st.button("🧸 Infantil", use_container_width=True, type="primary"):
+        if st.button(
+            "🧸\nINFANTIL\n(3 - 6 años)", use_container_width=True, type="primary"
+        ):
             st.session_state.ciclo_seleccionado = "Infantil"
             st.rerun()
 
     with col2:
-        if st.button("📚 Primaria", use_container_width=True, type="primary"):
+        if st.button(
+            "📚\nPRIMARIA\n(6 - 12 años)", use_container_width=True, type="primary"
+        ):
             st.session_state.ciclo_seleccionado = "Primaria"
             st.rerun()
 
     with col3:
-        if st.button("🔬 Secundaria", use_container_width=True, type="primary"):
+        if st.button(
+            "🔬\nSECUNDARIA\n(ESO / Bach.)", use_container_width=True, type="primary"
+        ):
             st.session_state.ciclo_seleccionado = "Secundaria"
             st.rerun()
-
-# ---------------------------------------------------------
-# PANTALLA ESPECÍFICA POR CICLO SELECCIONADO
-# ---------------------------------------------------------
 else:
     ciclo_actual = st.session_state.ciclo_seleccionado
+    usuario = st.session_state.usuario_autenticado
 
-    # Botón superior para volver al menú principal (Back / Exit)
-    col_back, _ = st.columns([1, 4])
+    col_back, _ = st.columns(2)
     with col_back:
-        if st.button("⬅️ Back / Exit", use_container_width=True):
+        if st.button("⬅️ Back / Exit"):
             st.session_state.ciclo_seleccionado = None
             st.rerun()
 
     st.title(f"🤖 Reserva de Material - Ciclo {ciclo_actual}")
+    st.caption(f"Reserva activa a nombre de: **{usuario}**")
 
-    # Configuración de tramos horarios según el ciclo seleccionado
     if ciclo_actual in ["Infantil", "Primaria"]:
         horarios = [
             "09:00 - 09:45",
@@ -171,109 +221,92 @@ else:
         ]
     else:
         horarios = [
-            "8:00 - 8:55 (1.ª)",
-            "8:55 - 9:50 (2.ª)",
-            "9:50 - 10:45 (3.ª)",
-            "11:05 - 12:00 (4.ª)",
-            "12:00 - 12:55 (5.ª)",
-            "12:55 - 13:50 (6.ª)",
-            "14:10 - 15:05 (7.ª)",
+            "08:00 - 08:55",
+            "08:55 - 09:50",
+            "09:50 - 10:45",
+            "11:15 - 12:10",
+            "12:10 - 13:05",
+            "13:05 - 14:00",
+            "15:00 - 15:55",
+            "15:55 - 16:50",
         ]
 
-    tab_reservar, tab_gestion = st.tabs(
-        ["📝 Solicitar Reserva", "📋 Ver y Cancelar Reservas"]
-    )
+    st.subheader("📝 Nueva Reserva")
+    col_form1, col_form2 = st.columns(2)
 
-    with tab_reservar:
-        col_izq, col_der = st.columns(2)
+    with col_form1:
+        fecha = st.date_input("Fecha de la reserva")
+        tramo = st.selectbox("Tramo horario", horarios)
 
-        with col_izq:
-            usuario = st.text_input(
-                "Nombre de la persona / profesor que reserva *"
+    with col_form2:
+        material = st.selectbox("Selecciona el material", list(INVENTARIO.keys()))
+        stock_total = INVENTARIO[material]
+
+        reservadas_en_tramo = sum(
+            res["Cantidad"]
+            for res in st.session_state.reservas
+            if res["Material"] == material
+            and res["Fecha"] == str(fecha)
+            and res["Horario"] == tramo
+        )
+        disponibles = stock_total - reservadas_en_tramo
+
+        if disponibles > 0:
+            cantidad = st.number_input(
+                f"Cantidad (Disponibles: {disponibles} de {stock_total})",
+                min_value=1,
+                max_value=disponibles,
+                value=1,
             )
-            material = st.selectbox(
-                "Material que deseas reservar", list(INVENTARIO.keys())
-            )
-            fecha = st.date_input("Fecha de reserva")
-            sesion = st.selectbox("Tramo horario", horarios)
-
-            # Restricción clave: El stock disminuye SOLO dentro del mismo ciclo educativo
-            cantidad_reservada_previamente = sum(
-                r["cantidad"]
-                for r in st.session_state.reservas
-                if r["ciclo"] == ciclo_actual
-                and r["material"] == material
-                and r["fecha"] == str(fecha)
-                and r["sesion"] == sesion
-            )
-
-            existencias_totales = INVENTARIO[material]
-            unidades_disponibles = existencias_totales - cantidad_reservada_previamente
-
-        with col_der:
-            st.info(f"**Existencias totales del centro:** {existencias_totales}")
-            st.metric(
-                label=f"Disponibles en {ciclo_actual} para el {fecha} ({sesion})",
-                value=unidades_disponibles,
-            )
-
-            if unidades_disponibles > 0:
-                cantidad = st.number_input(
-                    "Cantidad a reservar",
-                    min_value=1,
-                    max_value=unidades_disponibles,
-                    value=1,
-                    step=1,
-                )
-
-                if st.button("Confirmar reserva", type="primary"):
-                    if not usuario.strip():
-                        st.error(
-                            "⚠️ Debes indicar tu nombre en el campo de registro para poder reservar."
-                        )
-                    else:
-                        st.session_state.reservas.append({
-                            "usuario": usuario,
-                            "ciclo": ciclo_actual,
-                            "material": material,
-                            "fecha": str(fecha),
-                            "sesion": sesion,
-                            "cantidad": cantidad,
-                        })
-                        st.success(
-                            f"✅ ¡Reserva a nombre de **{usuario}** guardada con éxito! "
-                            f"{cantidad} unidad(es) de '{material}' para el {fecha} ({sesion})."
-                        )
-                        st.rerun()
-            else:
-                st.error(
-                    "⚠️ No hay unidades disponibles para este material en la fecha y sesión seleccionadas."
-                )
-
-    with tab_gestion:
-        st.subheader(f"Reservas Registradas para el Ciclo: {ciclo_actual}")
-
-        # Filtrar para ver solo lo reservado en esta pantalla activa
-        reservas_ciclo = [
-            (idx, r)
-            for idx, r in enumerate(st.session_state.reservas)
-            if r["ciclo"] == ciclo_actual
-        ]
-
-        if not reservas_ciclo:
-            st.write(f"No hay reservas registradas para {ciclo_actual}.")
         else:
-            for idx, res in reservas_ciclo:
-                col_info, col_accion = st.columns([5, 1])
-                with col_info:
+            st.warning(f"⚠️ No quedan unidades de '{material}' para este horario.")
+            cantidad = 0
+
+    if disponibles > 0:
+        if st.button("✅ Confirmar Reserva"):
+            nueva_reserva = {
+                "Profesor": usuario,
+                "Ciclo": ciclo_actual,
+                "Fecha": str(fecha),
+                "Horario": tramo,
+                "Material": material,
+                "Cantidad": cantidad,
+            }
+            st.session_state.reservas.append(nueva_reserva)
+            st.rerun()
+
+    st.markdown("<br>", unsafe_allow_html=True)
+    with st.expander(f"🔒 Ventana Privada: Gestionar / Eliminar reservas de {usuario}"):
+        mis_reservas = [
+            (i, res)
+            for i, res in enumerate(st.session_state.reservas)
+            if res["Profesor"].lower() == usuario.lower()
+        ]
+
+        if not mis_reservas:
+            st.info("No tienes ninguna reserva registrada a tu nombre.")
+        else:
+            st.write("Aquí puedes cancelar únicamente tus propias reservas:")
+            for indice_real, res in mis_reservas:
+                col_txt, col_btn = st.columns(2)
+                with col_txt:
                     st.write(
-                        f"👤 **{res['usuario']}** | 📌 **{res['material']}** | Cantidad: **{res['cantidad']}** | "
-                        f"Fecha: **{res['fecha']}** | Horario: **{res['sesion']}**"
+                        f"**📅 {res['Fecha']}** | 🕒 `{res['Horario']}` | "
+                        f"**{res['Ciclo']}** — **{res['Cantidad']}x {res['Material']}**"
                     )
-                with col_accion:
-                    st.button(
-                        "Cancelar",
-                        key=f"cancelar_{idx}",
-                        on_click=eliminar_reserva,
-                        args=(idx,),
-                    )
+                with col_btn:
+                    if st.button("🗑️ Eliminar mi reserva", key=f"priv_del_{indice_real}"):
+                        eliminar_reserva(indice_real)
+                        st.rerun()
+
+    st.markdown("---")
+    st.subheader("📋 Registro General de Reservas (Solo Consulta)")
+
+    if not st.session_state.reservas:
+        st.info("Aún no hay reservas registradas en el sistema.")
+    else:
+        for res in st.session_state.reservas:
+            st.write(
+                f"• **{res['Fecha']}** | `{res['Horario']}` | **{res['Ciclo']}** — "
+                f"**{res['Cantidad']}x {res['Material']}** *(Reservado por: {res['Profesor']})*"
+            )
