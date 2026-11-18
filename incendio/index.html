@@ -427,6 +427,33 @@
 
 <h1 id="proyecto-de-incendio">Proyecto de incendio</h1>
 <p>Aquí documentaré la pregunta, los datos, el método, los resultados y las limitaciones del proyecto.</p>
+<h1 id="incendio-saler">Incendio Saler</h1>
+<p>En las últimas sesiones hemos trabajado con un código parecido, por no decir casi igual, al de la primera sesión de imágenes.
+Entonces con las dos imágenes que nos proporcionaron empezamos a trabajar.</p>
+<p><img alt="Imagen de la combinación de tres colores del antes del Saler" src="antes_normal.png" />
+<img alt="Imagen de la combinación de tres colores del despues del Saler" src="despues_normal.png" /></p>
+<p>Después definimos las zonas verdes con el ndvi y yo también por mi propia cuenta hice la máscara de estas mismas.</p>
+<p><img alt="Imagen del ndvi del antes del Saler" src="antes_ndvi.png" />
+<img alt="Imagen del ndvi del despues del Saler" src="despues_ndvi.png" />
+<img alt="Imagen del ndvi máscara antes" src="antes_mascara.png" />
+<img alt="Imagen del ndvi máscara despues" src="despues_mascara.png" /></p>
+<p>Ahora empieza la dificultad de este reto, nos piden que distingamos la parte que ha sido incendiada, y despues sacar otra imagen con la diferencia.
+Entonces para sacar la diferencia en la línea de código creo la variable "ndvi_dif", y creo la imagen con tonos rojos, y para la imagen de la zona quemada la variable "quemado".</p>
+<p><img alt="Imagen del ndvi_dif del Saler" src="diferencia_rojo.png" />
+<img alt="Imagen de la parte incendiada del Saler" src="parte_incendiada.png" /></p>
+<p>Por último para sacar la imagen de la diferencia de la vegetación creo la variable nbr, que es la división del antes y después, y ahí doy por finalizado el reto.</p>
+<p><img alt="Imagen del nbr del Saler" src="diferencia_nbr.png" /></p>
+<p>O al menos eso creía porque faltaba hacer más cosas como primero arreglar mi nbr y crear otras imágenes, como la severidad, una representación del área afectada. Entonces creo otras imágenes  de diferencia de vegetación en grises y otra imágen que define la diferencia de nbr y ndvi en rojo.</p>
+<p><img alt="Imagen del Saler correción en grises" src="dif_grises.png" />
+<img alt="Imagen de dif entre nbr y ndvi en rojo" src="nbr_y_ndvi_en_rojo.png" /></p>
+<p>Después para la severidad en un principio la calculo y con ello aparece una imagen que tiene defectos (unos píxeles sueltos que no forman parte del incendio y su área afectada).</p>
+<p><img alt="Imagen de severidad sin corregir" src="severidad_con_imperf.png" /></p>
+<p>Con esto intento solucionar el problema, creo una copia del código y con ella hago pruebas que concluyen en una imagen de la severidad más clara sin imperfecciones.</p>
+<p><img alt="Imagen de severidad corregida" src="severidad_perfecta.png" /></p>
+<p>Y por último hago que calcule desde la terminal cuánta área ha sido afectada en hectáreas teniendo en cuenta esa diferencia que extraigo del área quemada y también de esta misma área sin aquellas imperfecciones, o islas, borradas:</p>
+<p>El área calculada con NDVI es 20.60 ha</p>
+<p>El área calculada con NBR es 32.32 ha</p>
+<p>Área NBR sin islas: 29.28 ha</p>
 
 
 
