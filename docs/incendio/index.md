@@ -18,7 +18,7 @@ Después definimos las zonas verdes con el ndvi y yo también por mi propia cuen
 ![Imagen del ndvi máscara despues](despues_mascara.png)
 
 Ahora empieza la dificultad de este reto, nos piden que distingamos la parte que ha sido incendiada, y despues sacar otra imagen con la diferencia.
-Entonces para sacar la diferencia en la línea de código creo la variable "ndvi_dif", y creo la imagen con tonos rojos,y para la imagen de la zona quemada la variable "quemado".
+Entonces para sacar la diferencia en la línea de código creo la variable "ndvi_dif", y creo la imagen con tonos rojos, y para la imagen de la zona quemada la variable "quemado".
 
 ![Imagen del ndvi_dif del Saler](diferencia_rojo.png)
 ![Imagen de la parte incendiada del Saler](parte_incendiada.png)

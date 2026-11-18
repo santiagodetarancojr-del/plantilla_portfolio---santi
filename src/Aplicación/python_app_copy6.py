@@ -13,8 +13,14 @@ if "usuario_autenticado" not in st.session_state:
 if "ciclo_seleccionado" not in st.session_state:
     st.session_state.ciclo_seleccionado = None
 
+if "vista_danos" not in st.session_state:
+    st.session_state.vista_danos = False
+
 if "reservas" not in st.session_state:
     st.session_state.reservas = []
+
+if "danos" not in st.session_state:
+    st.session_state.danos = []
 
 
 def obtener_imagen_base64(ruta_imagen):
@@ -26,17 +32,42 @@ def obtener_imagen_base64(ruta_imagen):
 
 directorio_actual = os.path.dirname(os.path.abspath(__file__))
 
-if (
+if st.session_state.vista_danos:
+    archivo_fondo = "fondo1.png"
+    css_tarjeta_principal = """
+        background-color: rgba(255, 255, 255, 0.78) !important;
+        backdrop-filter: blur(8px) !important;
+        -webkit-backdrop-filter: blur(8px) !important;
+        border-radius: 24px !important;
+        border: 1.5px solid rgba(255, 255, 255, 0.85) !important;
+        box-shadow: 0 15px 35px rgba(15, 23, 42, 0.15) !important;
+    """
+elif (
     st.session_state.usuario_autenticado is None
     or st.session_state.ciclo_seleccionado is None
 ):
     archivo_fondo = "fondo1.png"
-elif st.session_state.ciclo_seleccionado == "Infantil":
-    archivo_fondo = "fondoinfantil1.png"
-elif st.session_state.ciclo_seleccionado == "Primaria":
-    archivo_fondo = "fondoprimaria1.png"
+    css_tarjeta_principal = """
+        background-color: transparent !important;
+        background: transparent !important;
+        box-shadow: none !important;
+    """
 else:
-    archivo_fondo = "fondo_secundaria1.png"
+    if st.session_state.ciclo_seleccionado == "Infantil":
+        archivo_fondo = "fondoinfantil1.png"
+    elif st.session_state.ciclo_seleccionado == "Primaria":
+        archivo_fondo = "fondoprimaria1.png"
+    else:
+        archivo_fondo = "fondo_secundaria1.png"
+
+    css_tarjeta_principal = """
+        background-color: rgba(224, 242, 254, 0.55) !important;
+        backdrop-filter: blur(8px) !important;
+        -webkit-backdrop-filter: blur(8px) !important;
+        border-radius: 24px !important;
+        border: 1.5px solid rgba(255, 255, 255, 0.75) !important;
+        box-shadow: 0 15px 35px rgba(15, 23, 42, 0.15) !important;
+    """
 
 ruta_fondo = os.path.join(directorio_actual, archivo_fondo)
 imagen_base64 = obtener_imagen_base64(ruta_fondo)
@@ -74,9 +105,7 @@ st.markdown(
         background-attachment: fixed !important;
     }}
     [data-testid="stMainBlockContainer"] {{
-        background-color: transparent !important;
-        background: transparent !important;
-        box-shadow: none !important;
+        {css_tarjeta_principal}
         padding: 2.5rem 3.5rem;
         margin-top: 2rem;
         margin-bottom: 2rem;
@@ -154,9 +183,22 @@ def cargar_inventario():
 INVENTARIO = cargar_inventario()
 
 
+def obtener_stock_disponible_ciclo(ciclo, material):
+    stock_base = INVENTARIO.get(material, 0)
+    danadas = sum(
+        d["Cantidad"]
+        for d in st.session_state.danos
+        if d["Ciclo"] == ciclo and d["Material"] == material
+    )
+    return max(0, stock_base - danadas)
+
+
 def eliminar_reserva(indice):
     st.session_state.reservas.pop(indice)
 # --- FIN DE LA PARTE 1 (Pega la Parte 2 justo debajo de esta línea) ---
+# ---------------------------------------------------------
+# PANTALLA 1: LOGIN / REGISTRO DE ACCESO
+# ---------------------------------------------------------
 if st.session_state.usuario_autenticado is None:
     st.title("🔑 Registro de Acceso - Sistema de Reservas")
     st.write("Por favor, introduzca sus datos para registrar la reserva:")
@@ -170,11 +212,105 @@ if st.session_state.usuario_autenticado is None:
             st.session_state.usuario_autenticado = nombre_profesor.strip()
             st.rerun()
 
+# ---------------------------------------------------------
+# PANTALLA 2: GESTIÓN DE DAÑOS E INVENTARIO
+# ---------------------------------------------------------
+elif st.session_state.vista_danos:
+    usuario = st.session_state.usuario_autenticado
+
+    col_back, _ = st.columns([1, 3])
+    with col_back:
+        if st.button("⬅️ Volver a Ciclos"):
+            st.session_state.vista_danos = False
+            st.rerun()
+
+    st.title("🛠️ Informe de Daños e Inventario")
+    st.caption(f"Sesión activa de: **{usuario}**")
+
+    st.subheader("📢 Notificar material dañado")
+    col_d1, col_d2 = st.columns(2)
+
+    with col_d1:
+        ciclo_dano = st.selectbox(
+            "Ciclo afectado", ["Infantil", "Primaria", "Secundaria"]
+        )
+        material_dano = st.selectbox(
+            "Material dañado", list(INVENTARIO.keys())
+        )
+
+    with col_d2:
+        stock_operativo = obtener_stock_disponible_ciclo(ciclo_dano, material_dano)
+        stock_total = INVENTARIO[material_dano]
+
+        if stock_operativo > 0:
+            cantidad_dano = st.number_input(
+                f"Unidades dañadas (Operativas en {ciclo_dano}: {stock_operativo} de {stock_total})",
+                min_value=1,
+                max_value=stock_operativo,
+                value=1,
+            )
+        else:
+            st.warning(
+                f"⚠️ Todas las unidades de '{material_dano}' en {ciclo_dano} ya están reportadas como dañadas."
+            )
+            cantidad_dano = 0
+
+        comentario_dano = st.text_input(
+            "Comentario sobre la avería (opcional)",
+            placeholder="Ej: No carga la batería, rueda rota, falta cable USB...",
+        )
+
+    if stock_operativo > 0:
+        if st.button("🚨 Registrar incidencia"):
+            nuevo_dano = {
+                "Usuario": usuario,
+                "Ciclo": ciclo_dano,
+                "Material": material_dano,
+                "Cantidad": cantidad_dano,
+                "Comentario": comentario_dano.strip() if comentario_dano.strip() else "Sin comentarios",
+            }
+            st.session_state.danos.append(nuevo_dano)
+            st.rerun()
+
+    st.markdown("---")
+    st.subheader("📋 Registro Público de Materiales Dañados")
+
+    if not st.session_state.danos:
+        st.info("No hay material dañado registrado actualmente. ¡Todo el inventario está operativo!")
+    else:
+        df_danos = pd.DataFrame(st.session_state.danos)
+        st.dataframe(df_danos, use_container_width=True, hide_index=True)
+
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.subheader("🔧 Rehabilitar material reparado")
+
+        opciones_reparacion = [
+            f"#{i + 1} | [{d['Ciclo']}] {d['Cantidad']}x {d['Material']} — Reportado por {d['Usuario']} ({d['Comentario']})"
+            for i, d in enumerate(st.session_state.danos)
+        ]
+
+        seleccion_reparar = st.selectbox(
+            "Selecciona el reporte que ya ha sido reparado:",
+            opciones_reparacion,
+        )
+
+        if st.button("✅ Marcar como reparado"):
+            indice_a_eliminar = opciones_reparacion.index(seleccion_reparar)
+            st.session_state.danos.pop(indice_a_eliminar)
+            st.rerun()
+
+# ---------------------------------------------------------
+# PANTALLA 3: SELECCIÓN DE CICLOS
+# ---------------------------------------------------------
 elif st.session_state.ciclo_seleccionado is None:
-    col_logout, _ = st.columns(2)
+    col_logout, _, col_danos = st.columns([1.2, 2.3, 1.2])
     with col_logout:
         if st.button("❌ Cambiar de Profesor / Salir"):
             st.session_state.usuario_autenticado = None
+            st.rerun()
+    with col_danos:
+        if st.button("🛠️ Informe de daños", use_container_width=True):
+            st.session_state.vista_danos = True
             st.rerun()
 
     st.title("🤖 Reserva de Material de Informática y Robótica")
@@ -207,6 +343,10 @@ elif st.session_state.ciclo_seleccionado is None:
         ):
             st.session_state.ciclo_seleccionado = "Secundaria"
             st.rerun()
+
+# ---------------------------------------------------------
+# PANTALLA 4: RESERVAS DEL CICLO SELECCIONADO
+# ---------------------------------------------------------
 else:
     ciclo_actual = st.session_state.ciclo_seleccionado
     usuario = st.session_state.usuario_autenticado
@@ -236,11 +376,10 @@ else:
             "08:00 - 08:55",
             "08:55 - 09:50",
             "09:50 - 10:45",
-            "11:15 - 12:10",
-            "12:10 - 13:05",
-            "13:05 - 14:00",
-            "15:00 - 15:55",
-            "15:55 - 16:50",
+            "11:05 - 12:00",
+            "12:00 - 12:55",
+            "12:55 - 13:50",
+            "14:10 - 15:05",
         ]
 
     st.subheader("📝 Nueva Reserva")
@@ -252,26 +391,35 @@ else:
 
     with col_form2:
         material = st.selectbox("Selecciona el material", list(INVENTARIO.keys()))
+        stock_operativo_ciclo = obtener_stock_disponible_ciclo(ciclo_actual, material)
         stock_total = INVENTARIO[material]
 
         reservadas_en_tramo = sum(
             res["Cantidad"]
             for res in st.session_state.reservas
-            if res["Material"] == material
+            if res["Ciclo"] == ciclo_actual
+            and res["Material"] == material
             and res["Fecha"] == str(fecha)
             and res["Horario"] == tramo
         )
-        disponibles = stock_total - reservadas_en_tramo
+        disponibles = max(0, stock_operativo_ciclo - reservadas_en_tramo)
 
         if disponibles > 0:
             cantidad = st.number_input(
-                f"Cantidad (Disponibles: {disponibles} de {stock_total})",
+                f"Cantidad (Disponibles: {disponibles} de {stock_operativo_ciclo} operativos)",
                 min_value=1,
                 max_value=disponibles,
                 value=1,
             )
         else:
-            st.warning(f"⚠️ No quedan unidades de '{material}' para este horario.")
+            if stock_operativo_ciclo == 0:
+                st.warning(
+                    f"⚠️ Todas las unidades de '{material}' en {ciclo_actual} están averiadas actualmente."
+                )
+            else:
+                st.warning(
+                    f"⚠️ No quedan unidades disponibles de '{material}' para este horario."
+                )
             cantidad = 0
 
     if disponibles > 0:
@@ -318,7 +466,6 @@ else:
         st.info("Aún no hay reservas registradas en el sistema.")
     else:
         for res in st.session_state.reservas:
-            st.write(
-                f"• **{res['Fecha']}** | `{res['Horario']}` | **{res['Ciclo']}** — "
-                f"**{res['Cantidad']}x {res['Material']}** *(Reservado por: {res['Profesor']})*"
-            )
+            st.write(f"• {res['Fecha']} | {res['Horario']} | {res['Ciclo']} — "
+f"{res['Cantidad']}x {res['Material']} (Reservado por: {res['Profesor']})"
+)
